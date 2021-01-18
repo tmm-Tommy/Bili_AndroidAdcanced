@@ -489,6 +489,7 @@ public class MPChart extends AppCompatActivity {
             int value  = new Random().nextInt(100);
             chatX.add("数据"+(i+1));
             lineY.add(new Entry(i,value));
+            //如果在不知道当前的x轴,可以使用getEntryCount获取当前的x的下一个进行给值,一样的效果
             barY.add(new BarEntry(barDataSet.getEntryCount(),value));
             pieY.add(new PieEntry(value));
         }
