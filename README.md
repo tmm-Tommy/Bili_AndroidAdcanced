@@ -159,6 +159,7 @@
   }
   ```
 
+
 ## 2.Android中的二维码和条码ZXing
 
 + 导入
@@ -386,4 +387,192 @@ public class ZXing extends AppCompatActivity {
     }
 }
 ```
+
+## 3.Android中的图表MPAndroidChart
+
++ 引入
+
+```xml
+//MPAndroidChart（开源图表框架）
+implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
+```
+
+> 加上其他网络下载通道
+>
+> ```xml
+> allprojects {
+>  repositories {
+>      google()
+>      jcenter()
+>      maven { url 'https://jitpack.io' }
+>  }
+> }
+> ```
+
++ 布局
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".MPChart">
+
+    <com.github.mikephil.charting.charts.LineChart
+        android:id="@+id/mpchart_lchart"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"/>
+    <com.github.mikephil.charting.charts.BarChart
+        android:id="@+id/mpchart_bchart"
+        android:layout_weight="1"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+    <com.github.mikephil.charting.charts.PieChart
+        android:id="@+id/mpchart_pchart"
+        android:layout_weight="1"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+</LinearLayout>
+```
+
++ java控制代码
+
+```java
+package com.example.test_android_advanced;
+
+import android.graphics.Color;
+import android.os.Bundle;
+import android.util.Log;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
+public class MPChart extends AppCompatActivity {
+
+    private LineChart mMpchartLchart;
+    private BarChart mMpchartBchart;
+    private PieChart mMpchartPchart;
+    private List<String> chatX;
+    List<Integer> colors;
+    //--线形图
+    private LineData lineData;
+    private LineDataSet lineDataSet;
+    private List<Entry> lineY;
+    //---柱形图
+    private BarData barData;
+    private BarDataSet barDataSet;
+    private List<BarEntry> barY;
+    //--饼图
+    private PieData pieData;
+    private PieDataSet pieDataSet;
+    private List<PieEntry> pieY;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_m_p_chart);
+        initView();
+        setView();
+    }
+
+    private void setView() {
+        //获取数据
+        for (int i = 0; i < colors.size(); i++) {
+            int value  = new Random().nextInt(100);
+            chatX.add("数据"+(i+1));
+            lineY.add(new Entry(i,value));
+            barY.add(new BarEntry(barDataSet.getEntryCount(),value));
+            pieY.add(new PieEntry(value));
+        }
+        //刷新数据
+        updateBar();
+        updateLine();
+        updatePie();
+    }
+
+    private void initView() {
+        mMpchartLchart = findViewById(R.id.mpchart_lchart);
+        mMpchartBchart = findViewById(R.id.mpchart_bchart);
+        mMpchartPchart = findViewById(R.id.mpchart_pchart);
+        //实例化公共数据
+        chatX = new ArrayList<>();
+        colors = new ArrayList<>();
+        colors.add(Color.BLUE);
+        colors.add(Color.RED);
+        colors.add(Color.BLACK);
+        colors.add(Color.YELLOW);
+        colors.add(Color.GRAY);
+        //初始化线图
+        lineY = new ArrayList<>();
+        lineDataSet = new LineDataSet(lineY,"线形图");
+        //设置x
+        lineDataSet.setColors(colors);
+        lineData = new LineData(lineDataSet);
+        mMpchartLchart.setData(lineData);
+        mMpchartLchart.getXAxis().setValueFormatter(new ValueFormatter() {
+            @Override
+            public String getFormattedValue(float value) {
+                if (value>=0&&value<chatX.size())
+                    return chatX.get((int) value);
+                return "...";
+            }
+        });
+        mMpchartLchart.getXAxis().setPosition(XAxis.XAxisPosition.BOTTOM);
+        mMpchartLchart.getAxisRight().setEnabled(false);
+        //初始化柱形图
+        barY = new ArrayList<>();
+        barDataSet = new BarDataSet(barY,"柱形图");
+        barDataSet.setColors(colors);
+        barData = new BarData(barDataSet);
+        mMpchartBchart.setData(barData);
+        mMpchartBchart.getXAxis().setValueFormatter(new ValueFormatter() {
+            @Override
+            public String getFormattedValue(float value) {
+                if (value>=0&&value<chatX.size())
+                    return chatX.get((int) value);
+                return "...";
+            }
+        });
+        mMpchartBchart.getXAxis().setPosition(XAxis.XAxisPosition.BOTTOM);
+        mMpchartBchart.getAxisRight().setEnabled(false);
+        //初始化饼图
+        pieY = new ArrayList<>();
+        pieDataSet = new PieDataSet(pieY,"饼图");
+        pieDataSet.setColors(colors);
+        pieData = new PieData(pieDataSet);
+        mMpchartPchart.setData(pieData);
+    }
+    //刷新线形图
+    private void updateLine(){
+        lineDataSet.notifyDataSetChanged();
+        lineData.notifyDataChanged();
+        mMpchartLchart.notifyDataSetChanged();
+        mMpchartLchart.invalidate();
+    }
+    //刷新柱形图
+    private void updateBar(){
+        barDataSet.notifyDataSetChanged();
+        barData.notifyDataChanged();
+        mMpchartBchart.notifyDataSetChanged();
+        mMpchartBchart.invalidate();
+    }
+    //刷新饼图
+    private void updatePie(){
+        pieDataSet.notifyDataSetChanged();
+        pieData.notifyDataChanged();
+        mMpchartPchart.notifyDataSetChanged();
+        mMpchartPchart.invalidate();
+    }
+}
+```
+
+
 

@@ -35,5 +35,7 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
     //Zxing二维码生成
     implementation 'com.google.zxing:core:3.3.3'
+    //MPAndroidChart（开源图表框架）
+    implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
 
 }
