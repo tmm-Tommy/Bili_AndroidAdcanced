@@ -1,4 +1,4 @@
-# Android进阶-三方框架1
+# Android进阶-三方框架
 
 ## 1.Android的java和kotline对比
 
@@ -489,7 +489,7 @@ public class MPChart extends AppCompatActivity {
             int value  = new Random().nextInt(100);
             chatX.add("数据"+(i+1));
             lineY.add(new Entry(i,value));
-            //如果在不知道当前的x轴,可以使用getEntryCount获取当前的x的下一个进行给值,一样的效果.
+            //如果在不知道当前的x轴,可以使用getEntryCount获取当前的x的下一个进行给值,一样的效果
             barY.add(new BarEntry(barDataSet.getEntryCount(),value));
             pieY.add(new PieEntry(value));
         }
@@ -575,5 +575,353 @@ public class MPChart extends AppCompatActivity {
 }
 ```
 
+## 4.Android中使用百度地图Map(1)-创建第一个地图
 
++ 引入
 
+  + 进入百度地图开发平台
+
+    + 主页:http://lbsyun.baidu.com/
+
+    + 下载SDK:http://lbsyun.baidu.com/index.php?title=androidsdk/sdkandev-download
+
+      + 选择自己需要的,下载得到压缩包,解压后有个Libs
+      + 将jar导入Android项目中的libs,并添加到依赖
+      + ***并在app-src-main文件夹里创建一个jniLibs文件夹**,将下载好的文件全放里面(这些是百度地图的解密文件)
+
+    + 创建项目http://lbsyun.baidu.com/apiconsole/key#/home
+
+      + 通过gradle-Tasks-android-signingReport获取SHA1
+    + 获取key值:用于验证SDK
+
+  + 配置manifests的百度地图key值
+
+    + 权限
+
+      ```xml
+      <!-- 访问网络，进行地图相关业务数据请求，包括地图数据，路线规划，POI检索等 -->
+      <uses-permission android:name="android.permission.INTERNET" /> <!-- 获取网络状态，根据网络状态切换进行数据请求网络转换 -->
+      <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /> <!-- 读取外置存储。如果开发者使用了so动态加载功能并且把so文件放在了外置存储区域，则需要申请该权限，否则不需要 -->
+      <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" /> <!-- 写外置存储。如果开发者使用了离线地图，并且数据写在外置存储区域，则需要申请该权限 -->
+      <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+      ```
+
+    ```
+    + 9.0https
+    
+      ```xml
+      <application
+      android:usesCleartextTraffic="true"
+      ...
+                   >
+      
+      <uses-library
+                    android:name="org.apache.http.legacy"
+                    android:required="true" />
+    ```
+
+    + 配置key值
+
+      ```xml
+      <meta-data
+                 android:name="com.baidu.lbsapi.API_KEY"
+                 android:value="xxx" />
+      ```
+
++ 布局
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".BaiduMap">
+
+    <com.baidu.mapapi.map.MapView
+        android:id="@+id/baiudmap_map"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clickable="true" />
+
+</LinearLayout>
+```
+
++ java控制文件
+
+```java
+package com.example.test_android_advanced;
+
+public class BaiduMap extends AppCompatActivity {
+
+    private MapView mBaiudmapMap;
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mBaiudmapMap.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        mBaiudmapMap.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mBaiudmapMap.onDestroy();
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        //在使用SDK各组件之前初始化context信息，传入ApplicationContext
+        SDKInitializer.initialize(getApplicationContext());
+        setContentView(R.layout.activity_baidu_map);
+
+        initView();
+        setView();
+    }
+
+    private void setView() {
+
+    }
+
+    private void initView() {
+        mBaiudmapMap = findViewById(R.id.baiudmap_map);
+    }
+}
+```
+
+> 注意:
+>
+> + initialize:一定在setContentView设置布局之前
+> + initialize需要的上下文必须是getApplicationContext软件的上下文
+> + onResume:出现渲染,onPause挂在数据,onDestroy:销毁界面,这些方法与地图组件同步(为了优化性能)
+
+## 5.Android中使用百度地图Map(2)-简单定位
+
++ xml布局
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".TestBaiduMap">
+
+    <com.baidu.mapapi.map.MapView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/baidumap_map"/>
+    <Button
+        android:id="@+id/baidumap_bt1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="添加定位图标"/>
+    <Button
+        android:id="@+id/baidumap_bt2"
+        android:layout_toRightOf="@id/baidumap_bt1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="普通定位"/>
+    <Button
+        android:id="@+id/baidumap_bt3"
+        android:layout_toRightOf="@id/baidumap_bt2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="切换图层"/>
+
+</RelativeLayout>
+```
+
++ java控制代码
+
+```java
+package com.example.test_android_advanced;
+
+public class BaiduMap extends AppCompatActivity {
+
+    private MapView mBaiudmapMap;
+    private Button mBaidumapBt1;
+    private com.baidu.mapapi.map.BaiduMap MyMap;
+    private MarkerOptions mMarkerOptions;
+    private LatLng ll;
+    private Button mBaidumapBt2;
+    private Button mBaidumapBt3;
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mBaiudmapMap.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        mBaiudmapMap.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mBaiudmapMap.onDestroy();
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        //在使用SDK各组件之前初始化context信息，传入ApplicationContext
+        SDKInitializer.initialize(getApplicationContext());
+        setContentView(R.layout.activity_baidu_map);
+        initView();
+        setView();
+    }
+
+    private void setView() {
+        //添加定位标志
+        mBaidumapBt1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                addMapIcon(new LatLng(28.21, 113));
+            }
+        });
+        //地图移动视角
+        mBaidumapBt2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                updaetMapView(new LatLng(28.21, 113));
+            }
+        });
+        mBaidumapBt3.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mapStyle(new Random().nextInt(3));
+            }
+        });
+
+    }
+
+    private void updaetMapView(LatLng latLng) {
+        //设置经纬度
+        ll = latLng;
+        //定位前移动地图中心
+        MapStatus mMapStatus = new MapStatus.Builder()
+            .target(ll)
+            .zoom(18)
+            .build();
+        MapStatusUpdate mMapStatusUpdate = MapStatusUpdateFactory.newMapStatus(mMapStatus);
+        //开始移动
+        MyMap.setMapStatus(mMapStatusUpdate);
+    }
+
+    private void addMapIcon(LatLng latLng) {
+        //设置经纬度
+        ll = latLng;
+        //设置一个定位标志
+        mMarkerOptions = new MarkerOptions().icon(BitmapDescriptorFactory.fromResource(R.drawable.map_icon));
+        mMarkerOptions.position(ll);
+        //添加到地图尚
+        MyMap.addOverlay(mMarkerOptions);
+    }
+
+    private void mapStyle(int style) {
+        Toast.makeText(this, ""+style, Toast.LENGTH_SHORT).show();
+        switch (style) {
+            case 0:
+                MyMap.setMapType(com.baidu.mapapi.map.BaiduMap.MAP_TYPE_NORMAL);
+                break;
+            case 1:
+                MyMap.setMapType(com.baidu.mapapi.map.BaiduMap.MAP_TYPE_SATELLITE);
+                break;
+            case 2:
+                MyMap.setMapType(com.baidu.mapapi.map.BaiduMap.MAP_TYPE_NONE);
+                break;
+        }
+    }
+
+    private void initView() {
+        mBaiudmapMap = findViewById(R.id.baiudmap_map);
+        mBaidumapBt1 = findViewById(R.id.baidumap_bt1);
+        MyMap = mBaiudmapMap.getMap();
+        mBaidumapBt2 = findViewById(R.id.baidumap_bt2);
+        mBaidumapBt3 = findViewById(R.id.baidumap_bt3);
+    }
+}
+```
+
+## 6.Android使用环信即时通讯(1)-引入+简单登录
+
++ 引入
+
+  + 官网:https://www.easemob.com/
+
+  + 登录并创建应用
+
+  + SDK下载:https://www.easemob.com/download/im
+
+  + 创建项目
+
+    + 将jar以及jniLibs中文件全导入
+    + 配置manifest,官网:http://docs-im.easemob.com/im/android/sdk/import
+
+    + 并入口activity初始化
+
+    ```java
+    //配置环信sdk
+    EMOptions emOptions = new EMOptions();
+    emOptions.setAutoLogin(false);
+    //初始化环信sdk
+    EMClient.getInstance().init(this, emOptions);
+    ```
+
+  + 测试一下是否引入成功-登录
+
+  ```java
+  Handler handler = new Handler(){
+      @Override
+      public void handleMessage(@NonNull Message msg) {
+          Toast.makeText(MainActivity.this, msg.arg1+"", Toast.LENGTH_SHORT).show();
+      }
+  };
+  new Thread() {
+      @Override
+      public void run() {
+          try {
+              String s_user = "user1";
+              String s_pwd = "123456";
+              Message msg = new Message();
+              EMClient.getInstance().login(s_user, s_pwd, new EMCallBack() {//回调
+                  @Override
+                  public void onSuccess() {
+                      EMClient.getInstance().groupManager().loadAllGroups();
+                      EMClient.getInstance().chatManager().loadAllConversations();
+                      msg.arg1 = 1;
+                      handler.sendMessage(msg);
+                  }
+  
+                  @Override
+                  public void onProgress(int progress, String status) {
+  
+                  }
+  
+                  @Override
+                  public void onError(int code, String message) {
+                      msg.arg1 = 0;
+                      handler.sendMessage(msg);
+                  }
+              });
+          } catch (Exception e) {
+              Log.d("Toast_", "登录聊天服务器失败！" + e.toString());
+          }
+  
+      }
+  }.start();
+  ```
